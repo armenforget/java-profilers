@@ -19,11 +19,11 @@ import org.junit.runner.RunWith;
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestRestApi {
 
-	@Autowired
-	private TestRestTemplate restTemplate;
-
 	@LocalServerPort
 	private int port;
+
+	@Autowired
+	private TestRestTemplate restTemplate;
 
 	private String getUrl(String route) {
 		return getRootUrl() + route;
@@ -63,35 +63,44 @@ public class TestRestApi {
 		product.setModel("Playstation");
 		product.setDescription("Game console");
 
-		ResponseEntity<Product> postResponse = restTemplate.postForEntity(getUrl("/products"), product, Product.class);
-		Assert.assertNotNull(postResponse);
-		Assert.assertNotNull(postResponse.getBody());
+		String url = getUrl("/products");
+		ResponseEntity<Product> response = restTemplate.postForEntity(url, product, Product.class);
+
+		Assert.assertNotNull(response.getBody());
+		Assert.assertEquals("Sony", response.getBody().getManufacturer());
+		Assert.assertEquals("Playstation", response.getBody().getModel());
+		Assert.assertEquals("Game console", response.getBody().getDescription());
 	}
 
 	@Test
 	public void testUpdateProduct() {
-		String productUrl = getUrl("/products/1");
-		Product product = restTemplate.getForObject(productUrl, Product.class);
+		String url = getUrl("/products/1");
+
+		// TODO Create object with default settings, preferably using DI
+
+		Product product = restTemplate.getForObject(url, Product.class);
 		product.setManufacturer("honda");
 		product.setModel("civic");
 
-		restTemplate.put(productUrl, product);
+		restTemplate.put(url, product);
 
-		Product updatedProduct = restTemplate.getForObject(productUrl, Product.class);
+		Product updatedProduct = restTemplate.getForObject(url, Product.class);
 		System.out.println(updatedProduct);
 		Assert.assertNotNull(updatedProduct);
+		Assert.assertEquals("Honda", updatedProduct.getManufacturer());
+		Assert.assertEquals("Civic", updatedProduct.getModel());
 	}
 
 	@Test
 	public void testDeleteProduct() {
-		String productUrl = getUrl("/products/1");
-		Product product = restTemplate.getForObject(productUrl, Product.class);
+		String url = getUrl("/products/1");
+		Product product = restTemplate.getForObject(url, Product.class);
 		Assert.assertNotNull(product);
 
-		restTemplate.delete(productUrl);
+		restTemplate.delete(url);
 
 		try {
-			product = restTemplate.getForObject(productUrl, Product.class);
+			product = restTemplate.getForObject(url, Product.class);
 		} catch (final HttpClientErrorException e) {
 			Assert.assertEquals(e.getStatusCode(), HttpStatus.NOT_FOUND);
 		}
